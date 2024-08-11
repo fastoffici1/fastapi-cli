@@ -60,9 +60,10 @@ def _run(
     command: str,
     app: Union[str, None] = None,
     proxy_headers: bool = False,
+    is_factory: bool = False,
 ) -> None:
     try:
-        use_uvicorn_app = get_import_string(path=path, app_name=app)
+        use_uvicorn_app = get_import_string(path=path, app_name=app, is_factory=is_factory)
     except FastAPICLIException as e:
         logger.error(str(e))
         raise typer.Exit(code=1) from None
@@ -84,7 +85,6 @@ def _run(
             padding=(1, 2),
             style="green",
         )
-    print(Padding(panel, 1))
     if not uvicorn:
         raise FastAPICLIException(
             "Could not import Uvicorn, try running 'pip install uvicorn'"
@@ -97,6 +97,7 @@ def _run(
         workers=workers,
         root_path=root_path,
         proxy_headers=proxy_headers,
+        factory=is_factory,
     )
 
 
@@ -105,7 +106,7 @@ def dev(
     path: Annotated[
         Union[Path, None],
         typer.Argument(
-            help="A path to a Python file or package directory (with [blue]__init__.py[/blue] files) containing a [bold]FastAPI[/bold] app. If not provided, a default set of paths will be tried."
+            help="A path to a Python file or package directory (with [blue]__init__.py[/blue] files) containing a [bold]FastAPI[/bold] app or app factory. If not provided, a default set of paths will be tried."
         ),
     ] = None,
     *,
@@ -145,6 +146,10 @@ def dev(
             help="Enable/Disable X-Forwarded-Proto, X-Forwarded-For, X-Forwarded-Port to populate remote address info."
         ),
     ] = True,
+    factory: Annotated[
+        bool,
+        typer.Option(help="Treat [bold]path[bold] as an application factory, i.e. a () -> <ASGI app> callable.")
+    ] = False,
 ) -> Any:
     """
     Run a [bold]FastAPI[/bold] app in [yellow]development[/yellow] mode. 🧪
@@ -180,6 +185,7 @@ def dev(
         app=app,
         command="dev",
         proxy_headers=proxy_headers,
+        is_factory=factory,
     )
 
 
@@ -234,6 +240,10 @@ def run(
             help="Enable/Disable X-Forwarded-Proto, X-Forwarded-For, X-Forwarded-Port to populate remote address info."
         ),
     ] = True,
+    factory: Annotated[
+        bool,
+        typer.Option(help="Treat [bold]path[bold] as an application factory, i.e. a () -> <ASGI app> callable.")
+    ] = False,
 ) -> Any:
     """
     Run a [bold]FastAPI[/bold] app in [green]production[/green] mode. 🚀
@@ -270,6 +280,7 @@ def run(
         app=app,
         command="run",
         proxy_headers=proxy_headers,
+        is_factory=factory
     )
 
 
