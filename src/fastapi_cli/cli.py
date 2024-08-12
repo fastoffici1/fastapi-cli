@@ -63,7 +63,9 @@ def _run(
     is_factory: bool = False,
 ) -> None:
     try:
-        use_uvicorn_app = get_import_string(path=path, app_name=app, is_factory=is_factory)
+        use_uvicorn_app = get_import_string(
+            path=path, app_name=app, is_factory=is_factory
+        )
     except FastAPICLIException as e:
         logger.error(str(e))
         raise typer.Exit(code=1) from None
@@ -85,6 +87,7 @@ def _run(
             padding=(1, 2),
             style="green",
         )
+    print(Padding(panel, 1))
     if not uvicorn:
         raise FastAPICLIException(
             "Could not import Uvicorn, try running 'pip install uvicorn'"
@@ -148,7 +151,9 @@ def dev(
     ] = True,
     factory: Annotated[
         bool,
-        typer.Option(help="Treat [bold]path[bold] as an application factory, i.e. a () -> <ASGI app> callable.")
+        typer.Option(
+            help="Treat [bold]path[/bold] as an application factory, i.e. a () -> <ASGI app> callable."
+        ),
     ] = False,
 ) -> Any:
     """
@@ -242,7 +247,9 @@ def run(
     ] = True,
     factory: Annotated[
         bool,
-        typer.Option(help="Treat [bold]path[bold] as an application factory, i.e. a () -> <ASGI app> callable.")
+        typer.Option(
+            help="Treat [bold]path[/bold] as an application factory, i.e. a () -> <ASGI app> callable."
+        ),
     ] = False,
 ) -> Any:
     """
@@ -280,7 +287,7 @@ def run(
         app=app,
         command="run",
         proxy_headers=proxy_headers,
-        is_factory=factory
+        is_factory=factory,
     )
 
 
