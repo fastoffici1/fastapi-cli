@@ -98,7 +98,9 @@ def get_module_data_from_path(path: Path) -> ModuleData:
     )
 
 
-def get_app_name(*, mod_data: ModuleData, app_name: Union[str, None] = None, is_factory: bool = False) -> str:
+def get_app_name(
+    *, mod_data: ModuleData, app_name: Union[str, None] = None, is_factory: bool = False
+) -> str:
     try:
         mod = importlib.import_module(mod_data.module_import_str)
     except (ImportError, ValueError) as e:
@@ -140,11 +142,16 @@ def get_app_name(*, mod_data: ModuleData, app_name: Union[str, None] = None, is_
             return name
         elif callable(name) and is_factory:
             return name
-    raise FastAPICLIException("Could not find FastAPI app or app factory in module, try using --app")
+    raise FastAPICLIException(
+        "Could not find FastAPI app or app factory in module, try using --app"
+    )
 
 
 def get_import_string(
-    *, path: Union[Path, None] = None, app_name: Union[str, None] = None, is_factory: bool = False,
+    *,
+    path: Union[Path, None] = None,
+    app_name: Union[str, None] = None,
+    is_factory: bool = False,
 ) -> str:
     if not path:
         path = get_default_path()
@@ -154,7 +161,9 @@ def get_import_string(
         raise FastAPICLIException(f"Path does not exist {path}")
     mod_data = get_module_data_from_path(path)
     sys.path.insert(0, str(mod_data.extra_sys_path))
-    use_app_name = get_app_name(mod_data=mod_data, app_name=app_name, is_factory=is_factory)
+    use_app_name = get_app_name(
+        mod_data=mod_data, app_name=app_name, is_factory=is_factory
+    )
     import_example = Syntax(
         f"from {mod_data.module_import_str} import {use_app_name}", "python"
     )
