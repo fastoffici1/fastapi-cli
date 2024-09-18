@@ -179,6 +179,15 @@ def test_dev_help() -> None:
     assert "The name of the variable that contains the FastAPI app" in result.output
     assert "Use multiple worker processes." not in result.output
 
+def test_schema() -> None:
+    with changing_dir(assets_path):
+        with open('openapi.json', 'r') as stream:
+            expected = stream.read()
+        assert expected != "" , "Failed to read expected result"
+        result = runner.invoke(app, ["schema", "single_file_app.py"])
+        assert result.exit_code == 0, result.output
+        assert expected in result.output,  result.output
+
 
 def test_run_help() -> None:
     result = runner.invoke(app, ["run", "--help"])

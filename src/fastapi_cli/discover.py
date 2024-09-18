@@ -1,5 +1,6 @@
 import importlib
 import sys
+from contextlib import contextmanager
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
@@ -45,6 +46,18 @@ def get_default_path() -> Path:
 class ModuleData:
     module_import_str: str
     extra_sys_path: Path
+
+    @contextmanager
+    def sys_path(self):
+        """ Context manager to temporarily alter sys.path"""
+        extra_sys_path = str(self.extra_sys_path) if self.extra_sys_path else ""
+        if extra_sys_path:
+            logger.warning("Adding %s to sys.path...", extra_sys_path)
+            sys.path.insert(0, extra_sys_path)
+            yield
+        if extra_sys_path and sys.path and sys.path[0] == extra_sys_path:
+            logger.warning("Removing %s from sys.path...", extra_sys_path)
+            sys.path.pop(0)
 
 
 def get_module_data_from_path(path: Path) -> ModuleData:
@@ -165,3 +178,54 @@ def get_import_string(
     import_string = f"{mod_data.module_import_str}:{use_app_name}"
     logger.info(f"Using import string [b green]{import_string}[/b green]")
     return import_string
+
+def get_app(
+        *, path: Union[Path, None] = None, app_name: Union[str, None] = None
+) -> FastAPI:
+    if not path:
+        path = get_default_path()
+    logger.debug(f"Using path [blue]{path}[/blue]")
+    logger.debug(f"Resolved absolute path {path.resolve()}")
+    if not path.exists():
+        raise FastAPICLIException(f"Path does not exist {path}")
+    mod_data = get_module_data_from_path(path)
+    try:
+        with mod_data.sys_path():
+            mod = importlib.import_module(mod_data.module_import_str)
+    except (ImportError, ValueError) as e:
+        logger.error(f"Import error: {e}")
+        logger.warning(
+            "Ensure all the package directories have an [blue]__init__.py["
+            "/blue] file"
+        )
+        raise
+    if not FastAPI:  # type: ignore[truthy-function]
+        raise FastAPICLIException(
+            "Could not import FastAPI, try running 'pip install fastapi'"
+        ) from None
+    object_names = dir(mod)
+    object_names_set = set(object_names)
+    if app_name:
+        if app_name not in object_names_set:
+            raise FastAPICLIException(
+                f"Could not find app name {app_name} in "
+                f"{mod_data.module_import_str}"
+            )
+        app = getattr(mod, app_name)
+        if not isinstance(app, FastAPI):
+            raise FastAPICLIException(
+                f"The app name {app_name} in {mod_data.module_import_str} "
+                f"doesn't seem to be a FastAPI app"
+            )
+        return app
+    for preferred_name in ["app", "api"]:
+        if preferred_name in object_names_set:
+            obj = getattr(mod, preferred_name)
+            if isinstance(obj, FastAPI):
+                return obj
+    for name in object_names:
+        obj = getattr(mod, name)
+        if isinstance(obj, FastAPI):
+            return obj
+    raise FastAPICLIException(
+        "Could not find FastAPI app in module, try using --app")
