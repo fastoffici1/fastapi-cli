@@ -298,12 +298,10 @@ def schema(
     ] = None,
     indent: Annotated[
         int,
-            typer.Option(
-                help="JSON format indent. If 0, disable pretty printing"
-            ),
-        ] = 2,
-        ) -> Any:
-    """ Generate schema """
+        typer.Option(help="JSON format indent. If 0, disable pretty printing"),
+    ] = 2,
+) -> Any:
+    """Generate schema"""
     fastapi_app = get_app(path=path, app_name=app)
     schema = fastapi_app.openapi()
 
