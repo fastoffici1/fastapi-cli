@@ -49,7 +49,7 @@ class ModuleData:
 
     @contextmanager
     def sys_path(self):
-        """ Context manager to temporarily alter sys.path"""
+        """Context manager to temporarily alter sys.path"""
         extra_sys_path = str(self.extra_sys_path) if self.extra_sys_path else ""
         if extra_sys_path:
             logger.warning("Adding %s to sys.path...", extra_sys_path)
@@ -179,8 +179,9 @@ def get_import_string(
     logger.info(f"Using import string [b green]{import_string}[/b green]")
     return import_string
 
+
 def get_app(
-        *, path: Union[Path, None] = None, app_name: Union[str, None] = None
+    *, path: Union[Path, None] = None, app_name: Union[str, None] = None
 ) -> FastAPI:
     if not path:
         path = get_default_path()
@@ -227,5 +228,4 @@ def get_app(
         obj = getattr(mod, name)
         if isinstance(obj, FastAPI):
             return obj
-    raise FastAPICLIException(
-        "Could not find FastAPI app in module, try using --app")
+    raise FastAPICLIException("Could not find FastAPI app in module, try using --app")
