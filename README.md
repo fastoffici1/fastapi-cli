@@ -106,7 +106,7 @@ In most cases you would (and should) have a "termination proxy" handling HTTPS f
 
 When you run `fastapi schema`, it will generate a swagger/openapi document.
 
-This document will be output to stderr by default, however `--output <filename>` option can be used to write output into file. You can control the format of the JSON file by specifying indent level with `--indent #`. If set to 0, JSON will be in the minimal/compress form. Default is 2 spaces. 
+This document will be output to stderr by default, however `--output <filename>` option can be used to write output into file. You can control the format of the JSON file by specifying indent level with `--indent #`. If set to 0, JSON will be in the minimal/compress form. Default is 2 spaces.
 
 ## License
 
