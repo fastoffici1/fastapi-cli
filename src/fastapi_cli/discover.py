@@ -48,13 +48,13 @@ class ModuleData:
     extra_sys_path: Path
 
     @contextmanager
-    def sys_path(self):
+    def sys_path(self) -> str:
         """ Context manager to temporarily alter sys.path"""
         extra_sys_path = str(self.extra_sys_path) if self.extra_sys_path else ""
         if extra_sys_path:
             logger.warning("Adding %s to sys.path...", extra_sys_path)
             sys.path.insert(0, extra_sys_path)
-            yield
+            yield extra_sys_path
         if extra_sys_path and sys.path and sys.path[0] == extra_sys_path:
             logger.warning("Removing %s from sys.path...", extra_sys_path)
             sys.path.pop(0)

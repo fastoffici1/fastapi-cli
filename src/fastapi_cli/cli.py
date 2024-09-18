@@ -304,8 +304,8 @@ def schema(
         ] = 2,
         ) -> Any:
     """ Generate schema """
-    app = get_app(path=path, app_name=app)
-    schema = app.openapi()
+    fastapi_app = get_app(path=path, app_name=app)
+    schema = fastapi_app.openapi()
 
     stream = open(output, "w") if output else sys.stderr
     json.dump(schema, stream, indent=indent if indent > 0 else None)
