@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from typing import Iterator, Union
+from typing import Iterator, Tuple, Union
 
 from rich import print
 from rich.padding import Padding
@@ -149,9 +149,9 @@ def get_app_name(*, mod_data: ModuleData, app_name: Union[str, None] = None) -> 
     raise FastAPICLIException("Could not find FastAPI app in module, try using --app")
 
 
-def get_import_string(
+def get_import_string_parts(
     *, path: Union[Path, None] = None, app_name: Union[str, None] = None
-) -> str:
+) -> Tuple[ModuleData, str]:
     if not path:
         path = get_default_path()
     logger.info(f"Using path [blue]{path}[/blue]")
@@ -161,6 +161,15 @@ def get_import_string(
     mod_data = get_module_data_from_path(path)
     sys.path.insert(0, str(mod_data.extra_sys_path))
     use_app_name = get_app_name(mod_data=mod_data, app_name=app_name)
+
+    return mod_data, use_app_name
+
+
+def get_import_string(
+    *, path: Union[Path, None] = None, app_name: Union[str, None] = None
+) -> str:
+    mod_data, use_app_name = get_import_string_parts(path=path, app_name=app_name)
+    import_string = f"{mod_data.module_import_str}:{use_app_name}"
     import_example = Syntax(
         f"from {mod_data.module_import_str} import {use_app_name}", "python"
     )
@@ -175,7 +184,7 @@ def get_import_string(
     )
     logger.info("Found importable FastAPI app")
     print(import_panel)
-    import_string = f"{mod_data.module_import_str}:{use_app_name}"
+
     logger.info(f"Using import string [b green]{import_string}[/b green]")
     return import_string
 
@@ -183,49 +192,9 @@ def get_import_string(
 def get_app(
     *, path: Union[Path, None] = None, app_name: Union[str, None] = None
 ) -> FastAPI:
-    if not path:
-        path = get_default_path()
-    logger.debug(f"Using path [blue]{path}[/blue]")
-    logger.debug(f"Resolved absolute path {path.resolve()}")
-    if not path.exists():
-        raise FastAPICLIException(f"Path does not exist {path}")
-    mod_data = get_module_data_from_path(path)
-    try:
-        with mod_data.sys_path():
-            mod = importlib.import_module(mod_data.module_import_str)
-    except (ImportError, ValueError) as e:
-        logger.error(f"Import error: {e}")
-        logger.warning(
-            "Ensure all the package directories have an [blue]__init__.py["
-            "/blue] file"
-        )
-        raise
-    if not FastAPI:  # type: ignore[truthy-function]
-        raise FastAPICLIException(
-            "Could not import FastAPI, try running 'pip install fastapi'"
-        ) from None
-    object_names = dir(mod)
-    object_names_set = set(object_names)
-    if app_name:
-        if app_name not in object_names_set:
-            raise FastAPICLIException(
-                f"Could not find app name {app_name} in "
-                f"{mod_data.module_import_str}"
-            )
-        app = getattr(mod, app_name)
-        if not isinstance(app, FastAPI):
-            raise FastAPICLIException(
-                f"The app name {app_name} in {mod_data.module_import_str} "
-                f"doesn't seem to be a FastAPI app"
-            )
-        return app
-    for preferred_name in ["app", "api"]:
-        if preferred_name in object_names_set:
-            obj = getattr(mod, preferred_name)
-            if isinstance(obj, FastAPI):
-                return obj
-    for name in object_names:
-        obj = getattr(mod, name)
-        if isinstance(obj, FastAPI):
-            return obj
-    raise FastAPICLIException("Could not find FastAPI app in module, try using --app")
+    mod_data, use_app_name = get_import_string_parts(path=path, app_name=app_name)
+    with mod_data.sys_path():
+        mod = importlib.import_module(mod_data.module_import_str)
+    app = getattr(mod, use_app_name)
+    ## get_import_string_parts guarantees app is FastAPI object
+    return app  # type: ignore[no-any-return]
