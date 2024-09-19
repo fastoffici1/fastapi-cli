@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from typing import Union, Generator
+from typing import Generator, Union
 
 from rich import print
 from rich.padding import Padding
