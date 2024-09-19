@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from typing import Union
+from typing import Union, Generator
 
 from rich import print
 from rich.padding import Padding
@@ -48,7 +48,7 @@ class ModuleData:
     extra_sys_path: Path
 
     @contextmanager
-    def sys_path(self) -> str:
+    def sys_path(self) -> Generator:
         """Context manager to temporarily alter sys.path"""
         extra_sys_path = str(self.extra_sys_path) if self.extra_sys_path else ""
         if extra_sys_path:
