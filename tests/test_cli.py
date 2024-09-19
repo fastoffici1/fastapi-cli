@@ -183,7 +183,7 @@ def test_dev_help() -> None:
 def test_schema() -> None:
     with changing_dir(assets_path):
         with open("openapi.json") as stream:
-            expected = stream.read()
+            expected = stream.read().strip()
         assert expected != "", "Failed to read expected result"
         result = runner.invoke(app, ["schema", "single_file_app.py"])
         assert result.exit_code == 0, result.output
